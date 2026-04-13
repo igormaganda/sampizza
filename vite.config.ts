@@ -19,7 +19,7 @@ export default defineConfig(({mode}) => {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      allowedHosts: ['sam-pizza.mgd-crm.com', 'apisam.mgd-crm.com', '.mgd-crm.com'],
+      allowedHosts: 'all', // Allow all hosts in production
     },
   };
 });
