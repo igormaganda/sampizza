@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(plink root@109.123.249.114 -pw Yb0B7klHfSszoS376Sd77s9)",
+      "Bash(plink root@109.123.249.114 -pw Yb0B7klHfSszoS376Sd77s9 \"echo 'Connected successfully'; hostname; whoami\")",
+      "Bash(plink -batch root@109.123.249.114 -pw Yb0B7klHfSszoS376Sd77s9 \"echo 'Connected'; hostname; uname -a\")",
+      "Bash(plink -batch -hostkey \"SHA256:J4La+IiuO8vc1oklAS/STv60NQVhJsLa728f+p0YZlk\" root@109.123.249.114 -pw Yb0B7klHfSszoS376Sd77s9 \"echo 'Connected successfully'; hostname; pwd\")",
+      "Bash(pscp -batch -hostkey \"SHA256:J4La+IiuO8vc1oklAS/STv60NQVhJsLa728f+p0YZlk\" -pw Yb0B7klHfSszoS376Sd77s9 \"C:\\\\Users\\\\Administrator\\\\Documents\\\\test\\\\Pizza\\\\package.json\" root@109.123.249.114:/var/www/html/pizzeria/)",
+      "Bash(pscp -batch -hostkey \"SHA256:J4La+IiuO8vc1oklAS/STv60NQVhJsLa728f+p0YZlk\" -pw Yb0B7klHfSszoS376Sd77s9 \"C:\\\\Users\\\\Administrator\\\\Documents\\\\test\\\\Pizza\\\\server.ts\" root@109.123.249.114:/var/www/html/pizzeria/)",
+      "Bash(pscp -batch -hostkey \"SHA256:J4La+IiuO8vc1oklAS/STv60NQVhJsLa728f+p0YZlk\" -pw Yb0B7klHfSszoS376Sd77s9 \"C:\\\\Users\\\\Administrator\\\\Documents\\\\test\\\\Pizza\\\\vite.config.ts\" root@109.123.249.114:/var/www/html/pizzeria/)",
+      "Bash(pscp -batch -hostkey \"SHA256:J4La+IiuO8vc1oklAS/STv60NQVhJsLa728f+p0YZlk\" -pw Yb0B7klHfSszoS376Sd77s9 \"C:\\\\Users\\\\Administrator\\\\Documents\\\\test\\\\Pizza\\\\tsconfig.json\" root@109.123.249.114:/var/www/html/pizzeria/)",
+      "Bash(pscp -batch -hostkey \"SHA256:J4La+IiuO8vc1oklAS/STv60NQVhJsLa728f+p0YZlk\" -pw Yb0B7klHfSszoS376Sd77s9 -r \"C:\\\\Users\\\\Administrator\\\\Documents\\\\test\\\\Pizza\\\\src\" root@109.123.249.114:/var/www/html/pizzeria/)",
+      "Bash(rm -f .git/index)",
+      "Bash(git reset:*)",
+      "Bash(rm -rf .git)",
+      "Bash(git init:*)",
+      "Bash(git remote:*)"
+    ]
+  }
+}

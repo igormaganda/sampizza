@@ -1,0 +1,136 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - button "Storefront" [ref=e4]:
+      - img
+      - text: Storefront
+    - button "Admin" [ref=e5]:
+      - img
+      - text: Admin
+  - generic [ref=e6]:
+    - banner [ref=e7]:
+      - generic [ref=e8]:
+        - link "Sam Pizza Bondy Sam Pizza" [ref=e9] [cursor=pointer]:
+          - /url: "#"
+          - img "Sam Pizza Bondy" [ref=e10]
+          - text: Sam Pizza
+        - navigation [ref=e11]:
+          - link "Accueil" [ref=e12] [cursor=pointer]:
+            - /url: "#accueil"
+          - link "La Carte" [ref=e13] [cursor=pointer]:
+            - /url: "#menu"
+          - link "Avis" [ref=e14] [cursor=pointer]:
+            - /url: "#avis"
+          - link "Contact" [ref=e15] [cursor=pointer]:
+            - /url: "#contact"
+          - button "Panier" [ref=e16]:
+            - img [ref=e17]
+            - text: Panier
+    - generic [ref=e23]:
+      - heading "Tradition & Excellence" [level=1] [ref=e24]
+      - paragraph [ref=e25]: Pizzas artisanales et paninis gourmands. Service de livraison et à emporter à Bondy.
+      - generic [ref=e26]:
+        - link "Voir La Carte" [ref=e27] [cursor=pointer]:
+          - /url: "#menu"
+        - link "01 48 48 65 56" [ref=e28] [cursor=pointer]:
+          - /url: tel:+33148486556
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - heading "Notre Carte" [level=2] [ref=e32]
+        - paragraph [ref=e33]: Sélection de produits frais et pâte maison
+      - generic [ref=e34]:
+        - button "Tout" [ref=e35]:
+          - img [ref=e37]
+          - generic [ref=e39]: Tout
+        - button "Pizzas" [ref=e40]:
+          - img [ref=e42]
+          - generic [ref=e48]: Pizzas
+        - button "Paninis" [ref=e49]:
+          - img [ref=e51]
+          - generic [ref=e57]: Paninis
+        - button "Salades" [ref=e58]:
+          - img [ref=e60]
+          - generic [ref=e63]: Salades
+        - button "Desserts" [ref=e64]:
+          - img [ref=e66]
+          - generic [ref=e70]: Desserts
+        - button "Boissons" [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e75]: Boissons
+    - generic [ref=e77]:
+      - generic [ref=e78]:
+        - generic [ref=e79]: 4.4 / 5
+        - heading "Témoignages" [level=2] [ref=e80]
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - img [ref=e84]
+            - img [ref=e86]
+            - img [ref=e88]
+            - img [ref=e90]
+            - img [ref=e92]
+          - paragraph [ref=e94]: "\"Incontournable pour la livraison à Bondy. Les pizzas arrivent toujours chaudes et la pâte est incroyablement fine et croustillante.\""
+          - paragraph [ref=e95]: — Julien M.
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - img [ref=e98]
+            - img [ref=e100]
+            - img [ref=e102]
+            - img [ref=e104]
+            - img [ref=e106]
+          - paragraph [ref=e108]: "\"Super panini au poulet ! C'est rare de trouver des sandwichs aussi bien garnis. Je recommande les yeux fermés.\""
+          - paragraph [ref=e109]: — Amina K.
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - img [ref=e112]
+            - img [ref=e114]
+            - img [ref=e116]
+            - img [ref=e118]
+            - img [ref=e120]
+          - paragraph [ref=e122]: "\"Service à emporter très rapide. J'ai appelé à 19h, c'était prêt à 19h15. Bravo pour l'organisation.\""
+          - paragraph [ref=e123]: — Philippe D.
+    - generic [ref=e125]:
+      - heading "Contact & Retrait" [level=2] [ref=e127]
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - heading "Horaires" [level=3] [ref=e130]
+          - list [ref=e131]:
+            - listitem [ref=e132]:
+              - generic [ref=e133]: Lundi - Dimanche
+              - generic [ref=e134]: 11h00 – 14h30
+            - listitem [ref=e135]:
+              - generic [ref=e136]: Lundi - Dimanche
+              - generic [ref=e137]: 18h00 – 22h30
+          - paragraph [ref=e138]: "* Ouvert les jours fériés."
+          - heading "Coordonnées" [level=3] [ref=e139]
+          - generic [ref=e140]:
+            - paragraph [ref=e141]:
+              - strong [ref=e142]: Adresse
+              - generic [ref=e143]: 121 Rue Edouard Vaillant, 93140 Bondy
+            - paragraph [ref=e144]:
+              - strong [ref=e145]: Téléphone
+              - link "+33 1 48 48 65 56" [ref=e146] [cursor=pointer]:
+                - /url: tel:+33148486556
+            - paragraph [ref=e147]:
+              - strong [ref=e148]: Email
+              - generic [ref=e149]: contact@sampizza-bondy.fr
+        - generic [ref=e150]:
+          - iframe [ref=e152]:
+            
+          - paragraph [ref=e154]: Pas de salle de restaurant, uniquement retrait et livraison.
+    - contentinfo [ref=e155]:
+      - generic [ref=e156]:
+        - generic [ref=e157]: SAM PIZZA
+        - generic [ref=e158]:
+          - link "Accueil" [ref=e159] [cursor=pointer]:
+            - /url: "#accueil"
+          - link "Menu" [ref=e160] [cursor=pointer]:
+            - /url: "#menu"
+          - link "Avis" [ref=e161] [cursor=pointer]:
+            - /url: "#avis"
+          - link "Contact" [ref=e162] [cursor=pointer]:
+            - /url: "#contact"
+          - link "Suivre ma commande" [ref=e163] [cursor=pointer]:
+            - /url: /suivi
+          - link "Mentions Légales" [ref=e164] [cursor=pointer]:
+            - /url: https://www.societe.com/societe/m-b-l-828005637.html
+        - paragraph [ref=e166]: © 2026 Sam Pizza Bondy. Livraison & Vente à emporter uniquement.

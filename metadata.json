@@ -1,0 +1,5 @@
+{
+  "name": "Yummi Pizza",
+  "description": "A modern pizza ordering website with a front-office for customers and a back-office for order and stock management.",
+  "requestFramePermissions": []
+}
