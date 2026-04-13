@@ -6,12 +6,13 @@ import { ShoppingBag, Star, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { Icons } from './Icons';
 
 export function FrontOffice() {
-  const { menuItems, cart, setCartVisible } = useAppContext();
+  const { products, menus, cart, setCartVisible } = useAppContext();
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ItemCategory | 'tout'>('tout');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'all' | 'menus' | 'products'>('all');
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -28,9 +29,13 @@ export function FrontOffice() {
     setIsConfigOpen(true);
   };
 
-  const filteredItems = activeCategory === 'tout' 
-    ? menuItems 
-    : menuItems.filter(item => item.category === activeCategory);
+  const filteredItems = activeCategory === 'tout'
+    ? products
+    : products.filter(item => item.category === activeCategory);
+
+  const availableMenus = menus.filter(m => m.available);
+  const showMenus = viewMode === 'all' || viewMode === 'menus';
+  const showProducts = viewMode === 'all' || viewMode === 'products';
 
   const categories: { id: ItemCategory | 'tout', label: string, icon: React.ReactNode }[] = [
     { id: 'tout', label: 'Tout', icon: <Star className="w-6 h-6" /> },
@@ -122,58 +127,152 @@ export function FrontOffice() {
             <p className="font-sans text-text-light text-lg tracking-wider font-medium mt-4">Sélection de produits frais et pâte maison</p>
           </div>
 
-          {/* Custom Tabs */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-16">
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex flex-col items-center gap-3 pb-4 border-b-4 transition-all duration-300 ${activeCategory === cat.id ? 'border-primary text-primary scale-110' : 'border-transparent text-text-light hover:text-primary hover:scale-105'}`}
-              >
-                <div className={`w-16 h-16 flex items-center justify-center rounded-full ${activeCategory === cat.id ? 'bg-primary text-white shadow-lg' : 'bg-white text-gray-500 shadow-sm'}`}>
-                  {cat.icon}
-                </div>
-                <span className="text-sm uppercase tracking-[2px] font-bold">{cat.label}</span>
-              </button>
-            ))}
+          {/* View Mode Filter */}
+          <div className="flex justify-center gap-4 mb-12">
+            <button
+              onClick={() => setViewMode('all')}
+              className={`px-6 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all ${viewMode === 'all' ? 'bg-primary text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              Tout
+            </button>
+            <button
+              onClick={() => setViewMode('menus')}
+              className={`px-6 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all ${viewMode === 'menus' ? 'bg-primary text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              Menus ⭐
+            </button>
+            <button
+              onClick={() => setViewMode('products')}
+              className={`px-6 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all ${viewMode === 'products' ? 'bg-primary text-white shadow-lg' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              À la carte
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredItems.map(item => (
-              <article key={item.id} className="bg-white rounded-none overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col group border-2 border-primary">
-                <div className="relative h-64 overflow-hidden">
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <h3 className="text-2xl font-oswald font-bold uppercase text-white leading-tight drop-shadow-md">{item.name}</h3>
-                  </div>
-                  {!item.available && (
-                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm">
-                      <span className="bg-primary text-white px-6 py-3 text-lg uppercase tracking-widest font-bold rounded-full shadow-lg">Épuisé</span>
+          {/* Menus Section */}
+          {showMenus && availableMenus.length > 0 && (
+            <div className="mb-20">
+              <div className="text-center mb-12">
+                <h3 className="text-3xl md:text-4xl uppercase tracking-wider font-bold text-primary font-oswald mb-2">
+                  <span className="text-accent">⭐</span> Nos Menus <span className="text-accent">⭐</span>
+                </h3>
+                <p className="text-text-light text-lg">Formules avantageuses avec plusieurs plats</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {availableMenus.map(menu => (
+                  <article key={menu.id} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col group border-4 border-accent/50 hover:border-accent">
+                    <div className="relative h-56 overflow-hidden">
+                      <img
+                        src={menu.image}
+                        alt={menu.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute top-4 right-4 bg-accent text-white px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg">
+                        Menu
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="p-8 flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-4 gap-4">
-                    <h3 className="text-2xl font-oswald font-bold uppercase text-text-dark leading-tight group-hover:text-primary transition-colors">{item.name}</h3>
-                    <span className="text-3xl font-oswald font-bold text-primary shrink-0">{item.basePrice.toFixed(2)}€</span>
-                  </div>
-                  <p className="text-text-light text-base mb-8 flex-1">{item.description}</p>
-                  <button 
-                    onClick={() => handleOpenConfig(item)}
-                    disabled={!item.available}
-                    className="w-full py-4 bg-primary text-white rounded-full text-sm uppercase tracking-[2px] font-bold hover:bg-text-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                    <div className="p-8 flex flex-col flex-1">
+                      <div className="flex justify-between items-start mb-4 gap-4">
+                        <h3 className="text-2xl font-oswald font-bold uppercase text-text-dark leading-tight">{menu.name}</h3>
+                        <div className="text-right">
+                          <span className="text-3xl font-oswald font-bold text-primary">{menu.price.toFixed(2)}€</span>
+                          <p className="text-xs text-gray-500 line-through">{(menu.price * 1.15).toFixed(2)}€</p>
+                        </div>
+                      </div>
+                      <p className="text-text-light text-base mb-6 flex-1">{menu.description}</p>
+                      {menu.compositions && menu.compositions.length > 0 && (
+                        <div className="mb-6 text-sm">
+                          <p className="font-semibold text-gray-700 mb-2">Comprend :</p>
+                          <ul className="space-y-1 text-gray-600">
+                            {menu.compositions.map(comp => (
+                              <li key={comp.id} className="flex items-center gap-2">
+                                <span className="text-accent">•</span>
+                                {comp.quantity > 1 && `${comp.quantity}x `}
+                                {comp.product?.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => handleOpenConfig(menu)}
+                        className="w-full py-4 bg-accent text-white rounded-full text-sm uppercase tracking-[2px] font-bold hover:bg-text-dark transition-colors shadow-md hover:shadow-lg"
+                      >
+                        Commander ce menu
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Products Section */}
+          {showProducts && (
+            <div>
+              <div className="text-center mb-12">
+                <h3 className="text-3xl md:text-4xl uppercase tracking-wider font-bold text-primary font-oswald mb-2">
+                  À la carte
+                </h3>
+                <p className="text-text-light text-lg">Choisissez vos produits individuellement</p>
+              </div>
+
+              {/* Custom Tabs */}
+              <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-16">
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`flex flex-col items-center gap-3 pb-4 border-b-4 transition-all duration-300 ${activeCategory === cat.id ? 'border-primary text-primary scale-110' : 'border-transparent text-text-light hover:text-primary hover:scale-105'}`}
                   >
-                    Ajouter au panier
+                    <div className={`w-16 h-16 flex items-center justify-center rounded-full ${activeCategory === cat.id ? 'bg-primary text-white shadow-lg' : 'bg-white text-gray-500 shadow-sm'}`}>
+                      {cat.icon}
+                    </div>
+                    <span className="text-sm uppercase tracking-[2px] font-bold">{cat.label}</span>
                   </button>
-                </div>
-              </article>
-            ))}
-          </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {filteredItems.map(item => (
+                  <article key={item.id} className="bg-white rounded-none overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col group border-2 border-primary">
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <h3 className="text-2xl font-oswald font-bold uppercase text-white leading-tight drop-shadow-md">{item.name}</h3>
+                      </div>
+                      {!item.available && (
+                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center backdrop-blur-sm">
+                          <span className="bg-primary text-white px-6 py-3 text-lg uppercase tracking-widest font-bold rounded-full shadow-lg">Épuisé</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-8 flex flex-col flex-1">
+                      <div className="flex justify-between items-start mb-4 gap-4">
+                        <h3 className="text-2xl font-oswald font-bold uppercase text-text-dark leading-tight group-hover:text-primary transition-colors">{item.name}</h3>
+                        <span className="text-3xl font-oswald font-bold text-primary shrink-0">{item.basePrice.toFixed(2)}€</span>
+                      </div>
+                      <p className="text-text-light text-base mb-8 flex-1">{item.description}</p>
+                      <button
+                        onClick={() => handleOpenConfig(item)}
+                        disabled={!item.available}
+                        className="w-full py-4 bg-primary text-white rounded-full text-sm uppercase tracking-[2px] font-bold hover:bg-text-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                      >
+                        Ajouter au panier
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

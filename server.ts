@@ -3,7 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import Stripe from 'stripe';
 import path from 'path';
 import { db } from './src/db/index';
-import { menuItems, configOptions, orders, orderItems, customers, categories } from './src/db/schema';
+import { products, menus, menuCompositions, configOptions, orders, orderItems, customers, categories } from './src/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 
 // Initialize Stripe with environment variable (REQUIRED)
@@ -83,16 +83,16 @@ async function startServer() {
   // API routes
   app.get('/api/menu', async (req, res) => {
     try {
-      const items = await db.select().from(menuItems);
+      const items = await db.select().from(products);
       const configs = await db.select().from(configOptions);
-      
+
       // Parse JSON string back to array for frontend
       const formattedItems = items.map(item => ({
         ...item,
         allowedConfigCategories: JSON.parse(item.allowedConfigCategories as string)
       }));
 
-      res.json({ menuItems: formattedItems, configOptions: configs });
+      res.json({ products: formattedItems, configOptions: configs });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -104,7 +104,7 @@ async function startServer() {
       const newItemId = `m_${Date.now()}`;
       const basePrice = basePriceHT * (1 + vatRate / 100);
 
-      await db.insert(menuItems).values({
+      await db.insert(products).values({
         id: newItemId,
         name,
         description,
@@ -139,7 +139,7 @@ async function startServer() {
       if (available !== undefined) updateData.available = available;
       if (allowedConfigCategories !== undefined) updateData.allowedConfigCategories = JSON.stringify(allowedConfigCategories);
 
-      await db.update(menuItems).set(updateData).where(eq(menuItems.id, id));
+      await db.update(products).set(updateData).where(eq(products.id, id));
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -149,7 +149,7 @@ async function startServer() {
   app.delete('/api/menu/:id', authenticateAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      await db.delete(menuItems).where(eq(menuItems.id, id));
+      await db.delete(products).where(eq(products.id, id));
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -203,6 +203,155 @@ async function startServer() {
     try {
       const { id } = req.params;
       await db.delete(categories).where(eq(categories.id, id));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Menus endpoints
+  app.get('/api/menus', async (req, res) => {
+    try {
+      const allMenus = await db.select().from(menus).orderBy(menus.sortOrder);
+
+      // Get compositions for each menu
+      const menusWithCompositions = await Promise.all(allMenus.map(async (menu) => {
+        const compositions = await db.select().from(menuCompositions).where(eq(menuCompositions.menuId, menu.id));
+
+        // Get product details for each composition
+        const compositionsWithProducts = await Promise.all(compositions.map(async (comp) => {
+          const product = await db.select().from(products).where(eq(products.id, comp.productId)).limit(1);
+          return {
+            ...comp,
+            product: product[0] || null,
+          };
+        }));
+
+        return {
+          ...menu,
+          compositions: compositionsWithProducts,
+        };
+      }));
+
+      res.json(menusWithCompositions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/menus/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const menuData = await db.select().from(menus).where(eq(menus.id, id)).limit(1);
+
+      if (menuData.length === 0) {
+        return res.status(404).json({ error: 'Menu not found' });
+      }
+
+      const menu = menuData[0];
+      const compositions = await db.select().from(menuCompositions).where(eq(menuCompositions.menuId, menu.id));
+
+      // Get product details for each composition
+      const compositionsWithProducts = await Promise.all(compositions.map(async (comp) => {
+        const product = await db.select().from(products).where(eq(products.id, comp.productId)).limit(1);
+        return {
+          ...comp,
+          product: product[0] || null,
+        };
+      }));
+
+      res.json({ ...menu, compositions: compositionsWithProducts });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/menus', authenticateAdmin, async (req, res) => {
+    try {
+      const { name, description, priceHT, vatRate, image, sortOrder, available, compositions } = req.body;
+      const newMenuId = `menu_${Date.now()}`;
+      const price = priceHT * (1 + vatRate / 100);
+
+      await db.insert(menus).values({
+        id: newMenuId,
+        name,
+        description: description || null,
+        priceHT: parseFloat(priceHT),
+        vatRate: parseFloat(vatRate),
+        price: parseFloat(price.toFixed(2)),
+        image,
+        sortOrder: sortOrder || 0,
+        available: available !== undefined ? available : true,
+      });
+
+      // Insert compositions if provided
+      if (compositions && Array.isArray(compositions)) {
+        for (const comp of compositions) {
+          const compId = `mc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          await db.insert(menuCompositions).values({
+            id: compId,
+            menuId: newMenuId,
+            productId: comp.productId,
+            category: comp.category,
+            quantity: comp.quantity || 1,
+            required: comp.required !== undefined ? comp.required : true,
+          });
+        }
+      }
+
+      res.json({ success: true, id: newMenuId });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put('/api/menus/:id', authenticateAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, priceHT, vatRate, price, image, sortOrder, available, compositions } = req.body;
+
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (priceHT !== undefined) updateData.priceHT = parseFloat(priceHT);
+      if (vatRate !== undefined) updateData.vatRate = parseFloat(vatRate);
+      if (price !== undefined) updateData.price = parseFloat(price);
+      if (image !== undefined) updateData.image = image;
+      if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+      if (available !== undefined) updateData.available = available;
+
+      await db.update(menus).set(updateData).where(eq(menus.id, id));
+
+      // Update compositions if provided
+      if (compositions && Array.isArray(compositions)) {
+        // Delete existing compositions
+        await db.delete(menuCompositions).where(eq(menuCompositions.menuId, id));
+
+        // Insert new compositions
+        for (const comp of compositions) {
+          const compId = `mc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          await db.insert(menuCompositions).values({
+            id: compId,
+            menuId: id,
+            productId: comp.productId,
+            category: comp.category,
+            quantity: comp.quantity || 1,
+            required: comp.required !== undefined ? comp.required : true,
+          });
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete('/api/menus/:id', authenticateAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.delete(menus).where(eq(menus.id, id));
+      // Compositions will be deleted automatically due to CASCADE
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -317,7 +466,7 @@ async function startServer() {
         await db.insert(orderItems).values({
           id: `oi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           orderId,
-          menuItemId: item.menuItem.id,
+          productId: item.product.id,
           quantity: item.quantity,
           totalPrice: item.totalPrice,
           configurations: JSON.stringify(item.configurations),
@@ -363,10 +512,10 @@ async function startServer() {
       const ordersWithItems = await Promise.all(allOrders.map(async (order) => {
         const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
         const itemsWithMenuData = await Promise.all(items.map(async (item) => {
-          const menuData = await db.select().from(menuItems).where(eq(menuItems.id, item.menuItemId)).limit(1);
+          const productData = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
           return {
             ...item,
-            menuItem: menuData[0],
+            product: productData[0],
             configurations: JSON.parse(item.configurations as string)
           };
         }));
@@ -390,10 +539,10 @@ async function startServer() {
       const order = orderData[0];
       const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
       const itemsWithMenuData = await Promise.all(items.map(async (item) => {
-        const menuData = await db.select().from(menuItems).where(eq(menuItems.id, item.menuItemId)).limit(1);
+        const productData = await db.select().from(products).where(eq(products.id, item.productId)).limit(1);
         return {
           ...item,
-          menuItem: menuData[0],
+          product: productData[0],
           configurations: JSON.parse(item.configurations as string)
         };
       }));
@@ -508,7 +657,7 @@ async function startServer() {
         await db.insert(orderItems).values({
           id: `oi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           orderId,
-          menuItemId: item.menuItem.id,
+          productId: item.product.id,
           quantity: item.quantity,
           totalPrice: item.totalPrice,
           configurations: JSON.stringify(item.configurations),

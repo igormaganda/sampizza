@@ -6,7 +6,7 @@ export const categories = sqliteTable('categories', {
   sortOrder: integer('sort_order').notNull().default(0),
 });
 
-export const menuItems = sqliteTable('menu_items', {
+export const products = sqliteTable('products', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description').notNull(),
@@ -17,6 +17,27 @@ export const menuItems = sqliteTable('menu_items', {
   category: text('category').notNull(),
   available: integer('available', { mode: 'boolean' }).notNull().default(true),
   allowedConfigCategories: text('allowed_config_categories').notNull(), // JSON string array
+});
+
+export const menus = sqliteTable('menus', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  priceHT: real('price_ht').notNull(),
+  vatRate: real('vat_rate').notNull().default(10.0), // 5.5, 10, or 20
+  price: real('price').notNull(), // TTC price
+  image: text('image').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  available: integer('available', { mode: 'boolean' }).notNull().default(true),
+});
+
+export const menuCompositions = sqliteTable('menu_compositions', {
+  id: text('id').primaryKey(),
+  menuId: text('menu_id').notNull().references(() => menus.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull().references(() => products.id),
+  category: text('category').notNull(), // 'principal', 'accompagnement', 'boisson', 'dessert'
+  quantity: integer('quantity').notNull().default(1),
+  required: integer('required', { mode: 'boolean' }).notNull().default(true),
 });
 
 export const configOptions = sqliteTable('config_options', {
@@ -51,7 +72,7 @@ export const orders = sqliteTable('orders', {
 export const orderItems = sqliteTable('order_items', {
   id: text('id').primaryKey(),
   orderId: text('order_id').notNull().references(() => orders.id),
-  menuItemId: text('menu_item_id').notNull().references(() => menuItems.id),
+  productId: text('product_id').notNull().references(() => products.id),
   quantity: integer('quantity').notNull(),
   totalPrice: real('total_price').notNull(),
   configurations: text('configurations').notNull(), // JSON string of selected config options

@@ -491,12 +491,15 @@ function MenuManager() {
     <Card className="border-none shadow-md">
       <CardHeader>
         <CardTitle>Menu & Stock</CardTitle>
-        <CardDescription>Gérez vos catégories, produits et options de configuration.</CardDescription>
+        <CardDescription>Gérez vos menus, catégories, produits et options de configuration.</CardDescription>
       </CardHeader>
 
       <CardContent>
-        <Tabs defaultValue="products" className="space-y-4">
+        <Tabs defaultValue="menus" className="space-y-4">
           <TabsList className="bg-white border shadow-sm">
+            <TabsTrigger value="menus" className="data-[state=active]:bg-red-50 data-[state=active]:text-[#cc0000]">
+              Menus
+            </TabsTrigger>
             <TabsTrigger value="categories" className="data-[state=active]:bg-red-50 data-[state=active]:text-[#cc0000]">
               Catégories
             </TabsTrigger>
@@ -507,6 +510,10 @@ function MenuManager() {
               Options
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="menus" className="space-y-4">
+            <MenusManager />
+          </TabsContent>
 
           <TabsContent value="categories" className="space-y-4">
             <CategoriesManager />
@@ -520,6 +527,328 @@ function MenuManager() {
             <OptionsManager />
           </TabsContent>
         </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Menu types definition
+interface Menu {
+  id: string;
+  name: string;
+  description: string | null;
+  priceHT: number;
+  vatRate: number;
+  price: number;
+  image: string;
+  sortOrder: number;
+  available: boolean;
+  compositions?: MenuComposition[];
+}
+
+interface MenuComposition {
+  id: string;
+  menuId: string;
+  productId: string;
+  category: string;
+  quantity: number;
+  required: boolean;
+  product?: Product;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  basePriceHT: number;
+  vatRate: number;
+  basePrice: number;
+  image: string;
+  category: string;
+  available: boolean;
+  allowedConfigCategories: string[];
+}
+
+function MenusManager() {
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    fetchMenus();
+    fetchProducts();
+  }, []);
+
+  const fetchMenus = async () => {
+    try {
+      const response = await fetch('https://apisam.mgd-crm.com/api/menus');
+      const data = await response.json();
+      setMenus(data.sort((a: Menu, b: Menu) => a.sortOrder - b.sortOrder));
+    } catch (error) {
+      console.error('Failed to fetch menus:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('https://apisam.mgd-crm.com/api/menu');
+      const data = await response.json();
+      setProducts(data.products || []);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    }
+  };
+
+  const handleSaveMenu = async (menu: Partial<Menu>) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const method = editingMenu ? 'PUT' : 'POST';
+      const url = editingMenu
+        ? `https://apisam.mgd-crm.com/api/menus/${editingMenu.id}`
+        : 'https://apisam.mgd-crm.com/api/menus';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(menu)
+      });
+
+      if (response.ok) {
+        setEditingMenu(null);
+        setIsAdding(false);
+        fetchMenus();
+      }
+    } catch (error) {
+      console.error('Failed to save menu:', error);
+    }
+  };
+
+  const handleDeleteMenu = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce menu ?')) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`https://apisam.mgd-crm.com/api/menus/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        fetchMenus();
+      }
+    } catch (error) {
+      console.error('Failed to delete menu:', error);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8">Chargement...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Menus ({menus.length})</h3>
+        <Button onClick={() => setIsAdding(true)} className="bg-primary hover:bg-primary/90 text-white">
+          <Plus className="w-4 h-4 mr-2" />
+          Ajouter un menu
+        </Button>
+      </div>
+
+      <div className="grid gap-4">
+        {menus.map((menu) => (
+          <Card key={menu.id} className="border">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex gap-4">
+                  <img src={menu.image} alt={menu.name} className="w-20 h-20 object-cover rounded" />
+                  <div>
+                    <h4 className="font-semibold text-lg">{menu.name}</h4>
+                    <p className="text-sm text-gray-600">{menu.description}</p>
+                    <div className="flex gap-4 mt-2 text-sm">
+                      <span className="font-semibold text-lg">Prix TTC: {menu.price.toFixed(2)}€</span>
+                      <span className="text-gray-600">HT: {menu.priceHT.toFixed(2)}€</span>
+                      <span className="text-gray-600">TVA: {menu.vatRate}%</span>
+                    </div>
+                    {menu.compositions && menu.compositions.length > 0 && (
+                      <div className="mt-2 text-sm">
+                        <strong>Composé de:</strong> {menu.compositions.map(c => c.product?.name).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditingMenu(menu)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDeleteMenu(menu.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-2">
+                <Badge variant={menu.available ? "default" : "secondary"}>
+                  {menu.available ? 'Disponible' : 'Indisponible'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {(isAdding || editingMenu) && (
+        <MenuEditForm
+          menu={editingMenu}
+          products={products}
+          onSave={handleSaveMenu}
+          onCancel={() => {
+            setIsAdding(false);
+            setEditingMenu(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function MenuEditForm({
+  menu,
+  products,
+  onSave,
+  onCancel
+}: {
+  menu: Menu | null;
+  products: Product[];
+  onSave: (menu: Partial<Menu>) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: menu?.name || '',
+    description: menu?.description || '',
+    priceHT: menu?.priceHT || '',
+    vatRate: menu?.vatRate || 10,
+    image: menu?.image || '',
+    sortOrder: menu?.sortOrder || 0,
+    available: menu?.available !== undefined ? menu.available : true,
+    compositions: menu?.compositions || [],
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const price = parseFloat(formData.priceHT) * (1 + formData.vatRate / 100);
+    onSave({
+      ...formData,
+      priceHT: parseFloat(formData.priceHT),
+      vatRate: formData.vatRate,
+      price: parseFloat(price.toFixed(2)),
+      compositions: formData.compositions,
+    });
+  };
+
+  return (
+    <Card className="border">
+      <CardHeader>
+        <CardTitle>{menu ? 'Modifier le menu' : 'Nouveau menu'}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="menu-name">Nom du menu *</Label>
+              <Input
+                id="menu-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="menu-priceHT">Prix HT *</Label>
+              <Input
+                id="menu-priceHT"
+                type="number"
+                step="0.01"
+                value={formData.priceHT}
+                onChange={(e) => setFormData({ ...formData, priceHT: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="menu-description">Description</Label>
+            <Input
+              id="menu-description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Ex: Pizza au choix + boisson + dessert"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="menu-vatRate">Taux de TVA (%)</Label>
+              <Select value={formData.vatRate.toString()} onValueChange={(value) => setFormData({ ...formData, vatRate: parseFloat(value) })}>
+                <SelectTrigger id="menu-vatRate">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5.5">5.5%</SelectItem>
+                  <SelectItem value="10">10%</SelectItem>
+                  <SelectItem value="20">20%</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="menu-sortOrder">Ordre d'affichage</Label>
+              <Input
+                id="menu-sortOrder"
+                type="number"
+                value={formData.sortOrder}
+                onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="menu-image">URL de l'image *</Label>
+            <Input
+              id="menu-image"
+              value={formData.image}
+              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+              placeholder="https://..."
+              required
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Switch
+              id="menu-available"
+              checked={formData.available}
+              onCheckedChange={(checked) => setFormData({ ...formData, available: checked })}
+            />
+            <Label htmlFor="menu-available">Menu disponible</Label>
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
+              {menu ? 'Mettre à jour' : 'Créer'}
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Annuler
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

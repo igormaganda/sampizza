@@ -11,7 +11,7 @@ export type ConfigOption = {
 
 export type ItemCategory = 'pizza' | 'salade' | 'panini' | 'sandwich' | 'boisson' | 'dessert';
 
-export type MenuItem = {
+export type Product = {
   id: string;
   name: string;
   description: string;
@@ -22,12 +22,36 @@ export type MenuItem = {
   allowedConfigCategories: ConfigCategory[];
 };
 
+export type Menu = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  priceHT: number;
+  vatRate: number;
+  image: string;
+  sortOrder: number;
+  available: boolean;
+  compositions?: MenuComposition[];
+};
+
+export type MenuComposition = {
+  id: string;
+  menuId: string;
+  productId: string;
+  category: string;
+  quantity: number;
+  required: boolean;
+  product?: Product;
+};
+
 export type CartItem = {
   id: string;
-  menuItem: MenuItem;
+  menuItem: Product | Menu;
   quantity: number;
   configurations: ConfigOption[];
   totalPrice: number;
+  isMenu?: boolean;
 };
 
 export type OrderStatus = 'attente_paiement' | 'en_attente' | 'en_preparation' | 'pret' | 'livre';
@@ -45,7 +69,8 @@ export type Order = {
 };
 
 interface AppContextType {
-  menuItems: MenuItem[];
+  products: Product[];
+  menus: Menu[];
   configOptions: ConfigOption[];
   cart: CartItem[];
   orders: Order[];
@@ -56,8 +81,8 @@ interface AppContextType {
   placeOrder: (customerName: string, deliveryMethod: DeliveryMethod, deliveryDate?: string, deliveryTime?: string, comments?: string) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   updateMenuItemAvailability: (itemId: string, available: boolean) => void;
-  addMenuItem: (item: Partial<MenuItem>) => Promise<void>;
-  updateMenuItem: (id: string, item: Partial<MenuItem>) => Promise<void>;
+  addMenuItem: (item: Partial<Product>) => Promise<void>;
+  updateMenuItem: (id: string, item: Partial<Product>) => Promise<void>;
   deleteMenuItem: (id: string) => Promise<void>;
   isCartVisible: boolean;
   setCartVisible: (visible: boolean) => void;
@@ -68,7 +93,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [menus, setMenus] = useState<Menu[]>([]);
   const [configOptions, setConfigOptions] = useState<ConfigOption[]>([]);
   const [cart, setCart] = useState<CartItem[]>(() => {
     const savedCart = localStorage.getItem('sam_pizza_cart');
@@ -85,8 +111,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const menuRes = await fetch('https://apisam.mgd-crm.com/api/menu');
       const menuData = await menuRes.json();
 
-      setMenuItems(menuData.menuItems);
+      setProducts(menuData.products || []);
       setConfigOptions(menuData.configOptions);
+
+      // Fetch menus
+      const menusRes = await fetch('https://apisam.mgd-crm.com/api/menus');
+      const menusData = await menusRes.json();
+      setMenus(menusData);
 
       // Try to fetch orders, but don't fail if not authenticated
       try {
@@ -272,7 +303,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider
       value={{
-        menuItems,
+        products,
+        menus,
         configOptions,
         cart,
         orders,
